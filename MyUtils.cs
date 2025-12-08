@@ -1,6 +1,5 @@
 ﻿#nullable enable
 global using static InfernumAbyssGenerationPatch.MyUtils;
-using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -110,56 +109,63 @@ public class MyUtils
     internal static T? InvokeConstructor<T>(string classPath, params object[] args) =>
         InvokeConstructor<T>(classPath, null, args);
 
-    internal static MemberInfo? GetField(string classPath, string fieldName, string fieldType,
-        BindingFlags bindingFlags = DefaultFlags)
+    internal static T? GetField<T>(string classPath, string fieldName,
+        BindingFlags bindingFlags = DefaultFlags) where T : MemberInfo
     {
         var fieldPath = $"{classPath}.{fieldName}";
         if (FieldCache.TryGetValue(fieldPath, out var cachedFieldInfo))
         {
-            return cachedFieldInfo;
+            return (T)cachedFieldInfo;
         }
 
         var classInfo = GetClass(classPath);
-        MemberInfo? newFieldInfo = fieldType == "Field"
-            ? classInfo?.GetField(fieldName, bindingFlags)
-            : classInfo?.GetProperty(fieldName, bindingFlags);
+        MemberInfo? newFieldInfo = typeof(T) == typeof(FieldInfo) ? classInfo?.GetField(fieldName, bindingFlags) :
+            typeof(T) == typeof(PropertyInfo) ? classInfo?.GetProperty(fieldName, bindingFlags) : null;
         if (newFieldInfo is null)
         {
             return null;
         }
 
         FieldCache.Add(fieldPath, newFieldInfo);
-        return newFieldInfo;
+        return (T)newFieldInfo;
     }
 
-    internal static T? GetValue<T>(string classPath, string fieldName, string fieldType = "Field",
-        BindingFlags bindingFlags = DefaultFlags)
+    internal static FieldInfo? GetField(string classPath, string fieldName,
+        BindingFlags bindingFlags = DefaultFlags) => GetField<FieldInfo>(classPath, fieldName, bindingFlags);
+
+    internal static TV? GetValue<T, TV>(string classPath, string fieldName,
+        BindingFlags bindingFlags = DefaultFlags) where T : MemberInfo
     {
-        var fieldInfo = GetField(classPath, fieldName, fieldType, bindingFlags);
-        var fieldValue = fieldType == "Field"
-            ? ((FieldInfo)fieldInfo!)?.GetValue(null)
-            : ((PropertyInfo)fieldInfo!)?.GetValue(null);
+        var fieldInfo = GetField<T>(classPath, fieldName, bindingFlags);
+        var fieldValue = typeof(T) == typeof(FieldInfo) ? (fieldInfo as FieldInfo)?.GetValue(null) :
+            typeof(T) == typeof(PropertyInfo) ? (fieldInfo as PropertyInfo)?.GetValue(null) : null;
         if (fieldValue is null)
         {
             return default;
         }
 
-        return (T)fieldValue;
+        return (TV)fieldValue;
     }
 
-    internal static void SetValue(string classPath, string fieldName, object value, string fieldType = "Field",
-        BindingFlags bindingFlags = DefaultFlags)
+    internal static TV? GetValue<TV>(string classPath, string fieldName,
+        BindingFlags bindingFlags = DefaultFlags) => GetValue<FieldInfo, TV>(classPath, fieldName, bindingFlags);
+
+    internal static void SetValue<T>(string classPath, string fieldName, object value,
+        BindingFlags bindingFlags = DefaultFlags) where T : MemberInfo
     {
-        var fieldInfo = GetField(classPath, fieldName, fieldType, bindingFlags);
-        if (fieldType == "Field")
+        var fieldInfo = GetField<T>(classPath, fieldName, bindingFlags);
+        if (typeof(T) == typeof(FieldInfo))
         {
-            ((FieldInfo)fieldInfo!)?.SetValue(null, value);
+            (fieldInfo as FieldInfo)?.SetValue(null, value);
         }
-        else
+        else if (typeof(T) == typeof(PropertyInfo))
         {
-            ((PropertyInfo)fieldInfo!)?.SetValue(null, value);
+            (fieldInfo as PropertyInfo)?.SetValue(null, value);
         }
     }
+
+    internal static void SetValue(string classPath, string fieldName, object value,
+        BindingFlags bindingFlags = DefaultFlags) => SetValue<FieldInfo>(classPath, fieldName, value, bindingFlags);
 
     internal static ushort GetId(string typeName, string classPath)
     {
@@ -181,7 +187,7 @@ public class MyUtils
             MethodCache.Add(methodPath, methodInfo);
         }
 
-        var result = methodInfo?.MakeGenericMethod(classInfo)?.Invoke(null, null);
+        var result = methodInfo.MakeGenericMethod(classInfo).Invoke(null, null);
         if (result is null)
         {
             return 0;

@@ -1,15 +1,4 @@
-﻿//using CalamityMod.Tiles.Abyss;
-//using CalamityMod.Tiles.Abyss.AbyssAmbient;
-//using CalamityMod.Tiles.Ores;
-//using CalamityMod.Walls;
-//using CalamityMod.World;
-//using InfernumMode;
-//using InfernumMode.Common.Worldgen;
-//using InfernumMode.Content.Tiles.Abyss;
-//using InfernumMode.Core.GlobalInstances.Systems;
-
-using Microsoft.Xna.Framework;
-using Newtonsoft.Json.Linq;
+﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,12 +9,8 @@ using Terraria.ModLoader;
 using Terraria.ObjectData;
 using Terraria.Utilities;
 using Terraria.WorldBuilding;
-//using static CalamityMod.World.SulphurousSea;
 using static Microsoft.Xna.Framework.MathHelper;
 using static System.MathF;
-using static XPT.Core.Audio.MP3Sharp.Decoding.Decoder;
-
-//using LumUtils = Luminance.Common.Utilities.Utilities;
 
 namespace InfernumAbyssGenerationPatch;
 
@@ -114,11 +99,11 @@ public static class AbyssGen
     public const int WallThickness = 70;
 
     // ========================================反射字段========================================
-    public static int BiomeWidth => GetValue<int>("CalamityMod.World.SulphurousSea", "BiomeWidth", "Property");
+    public static int BiomeWidth => GetValue<PropertyInfo, int>("CalamityMod.World.SulphurousSea", "BiomeWidth");
 
-    public static int YStart => GetValue<int>("CalamityMod.World.SulphurousSea", "YStart", "Property");
+    public static int YStart => GetValue<PropertyInfo, int>("CalamityMod.World.SulphurousSea", "YStart");
 
-    public static int BlockDepth => GetValue<int>("CalamityMod.World.SulphurousSea", "BlockDepth", "Property");
+    public static int BlockDepth => GetValue<PropertyInfo, int>("CalamityMod.World.SulphurousSea", "BlockDepth");
 
     public static float SandstoneEdgeNoiseMagnification =>
         GetValue<float>("CalamityMod.World.SulphurousSea", "SandstoneEdgeNoiseMagnification");
@@ -134,26 +119,34 @@ public static class AbyssGen
 
     public static bool InPostAEWUpdateWorld
     {
-        get => GetValue<bool>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "InPostAEWUpdateWorld", "Property");
-        set => SetValue("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "InPostAEWUpdateWorld", value, "Property");
+        get => GetValue<PropertyInfo, bool>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "InPostAEWUpdateWorld");
+        set => SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "InPostAEWUpdateWorld", value);
     }
 
     public static int AbyssLayer1ForestSeed
     {
-        get => GetValue<int>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "AbyssLayer1ForestSeed", "Property");
-        set => SetValue("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "AbyssLayer1ForestSeed", value, "Property");
+        get => GetValue<PropertyInfo, int>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "AbyssLayer1ForestSeed");
+        set => SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "AbyssLayer1ForestSeed", value);
     }
 
     public static int AbyssLayer3CavernSeed
     {
-        get => GetValue<int>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "AbyssLayer3CavernSeed", "Property");
-        set => SetValue("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "AbyssLayer3CavernSeed", value, "Property");
+        get => GetValue<PropertyInfo, int>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "AbyssLayer3CavernSeed");
+        set => SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "AbyssLayer3CavernSeed", value);
     }
 
     public static Point SquidDenCenter
     {
-        get => GetValue<Point>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "SquidDenCenter", "Property");
-        set => SetValue("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "SquidDenCenter", value, "Property");
+        get => GetValue<PropertyInfo, Point>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "SquidDenCenter");
+        set => SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem", "SquidDenCenter",
+            value);
     }
 
     public static bool AtLeftSideOfWorld
@@ -1614,12 +1607,14 @@ public static class AbyssGen
 
     public static void GenerateEidolistPedestal(Point pedestalCenter)
     {
-        SetValue("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSyste", "EidolistWorshipPedestalCenter",
-            new Point(pedestalCenter.X, pedestalCenter.Y + Main.remixWorld.ToDirectionInt() * 2), "Property");
+        SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSyste",
+            "EidolistWorshipPedestalCenter",
+            new Point(pedestalCenter.X, pedestalCenter.Y + Main.remixWorld.ToDirectionInt() * 2));
 
         ushort voidstoneID = GetTileId("CalamityMod.Tiles.Abyss.Voidstone");
         WorldUtils.Gen(pedestalCenter,
-            InvokeConstructor<GenShape>("InfernumMode.Common.Worldgen.CustomInfernumShapes", "HalfCircle", EidolistPedestalRadius),
+            InvokeConstructor<GenShape>("InfernumMode.Common.Worldgen.CustomInfernumShapes", "HalfCircle",
+                EidolistPedestalRadius),
             Actions.Chain(
             [
                 new Modifiers.Blotches(2, 0.36),
@@ -1820,6 +1815,11 @@ public static class AbyssGen
 
     public static void ChangeLavaToWater()
     {
+        if (!Main.remixWorld) // 非颠倒世界跳过
+        {
+            return;
+        }
+
         int minWidth = MinAbyssWidth;
         int maxWidth = MaxAbyssWidth;
         int top = AbyssTop;
@@ -1828,69 +1828,33 @@ public static class AbyssGen
         for (int i = 1; i < maxWidth; i++)
         {
             int x = GetActualX(i);
-            if (Main.remixWorld)
+            for (int y = top; y > bottom; y--)
             {
-                for (int y = top; y > bottom; y--)
+                Tile t = Framing.GetTileSafely(x, y);
+                float yCompletion = Utils.GetLerpValue(top, bottom - 1f, y, true);
+                if (i >= GetWidth(yCompletion, minWidth, maxWidth))
                 {
-                    Tile t = Framing.GetTileSafely(x, y);
-                    float yCompletion = Utils.GetLerpValue(top, bottom - 1f, y, true);
-                    if (i >= GetWidth(yCompletion, minWidth, maxWidth))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    // 将岩浆和黑曜石转换为水
-                    if (t.HasTile)
+                // 将岩浆和黑曜石转换为水
+                if (t.HasTile)
+                {
+                    if (t.TileType == TileID.Obsidian)
                     {
-                        if (t.TileType == TileID.Obsidian)
-                        {
-                            ResetToWater(new Point(x, y));
-                        }
-                    }
-                    else
-                    {
-                        if (t.LiquidType == LiquidID.Lava)
-                        {
-                            t.LiquidType = LiquidID.Water;
-                        }
-
-                        if (t.LiquidAmount < 255)
-                        {
-                            t.LiquidAmount = 255;
-                        }
+                        ResetToWater(new Point(x, y));
                     }
                 }
-            }
-            else
-            {
-                for (int y = top; y < bottom; y++)
+                else
                 {
-                    Tile t = Framing.GetTileSafely(x, y);
-                    float yCompletion = Utils.GetLerpValue(top, bottom - 1f, y, true);
-                    if (i >= GetWidth(yCompletion, minWidth, maxWidth))
+                    if (t.LiquidType == LiquidID.Lava)
                     {
-                        continue;
+                        t.LiquidType = LiquidID.Water;
                     }
 
-                    // 将岩浆和黑曜石转换为水
-                    if (t.HasTile)
+                    if (t.LiquidAmount < 255)
                     {
-                        if (t.TileType == TileID.Obsidian)
-                        {
-                            ResetToWater(new Point(x, y));
-                        }
-                    }
-                    else
-                    {
-                        if (t.LiquidType == LiquidID.Lava)
-                        {
-                            t.LiquidType = LiquidID.Water;
-                        }
-
-                        if (t.LiquidAmount < 255)
-                        {
-                            t.LiquidAmount = 255;
-                        }
+                        t.LiquidAmount = 255;
                     }
                 }
             }
