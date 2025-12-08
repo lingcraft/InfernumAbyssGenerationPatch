@@ -1,5 +1,5 @@
 ﻿#nullable enable
-global using static InfernumAbyssGenPatch.MyUtils;
+global using static InfernumAbyssGenerationPatch.MyUtils;
 using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Terraria.ModLoader;
 
-namespace InfernumAbyssGenPatch;
+namespace InfernumAbyssGenerationPatch;
 
 public class MyUtils
 {

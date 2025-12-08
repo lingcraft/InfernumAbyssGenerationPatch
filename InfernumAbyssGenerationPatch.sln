@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.3.11222.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfernumAbyssGenPatch", "InfernumAbyssGenPatch.csproj", "{1669DB93-7D6E-53AF-91E8-7A6BE9421B83}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfernumAbyssGenerationPatch", "InfernumAbyssGenerationPatch.csproj", "{1669DB93-7D6E-53AF-91E8-7A6BE9421B83}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

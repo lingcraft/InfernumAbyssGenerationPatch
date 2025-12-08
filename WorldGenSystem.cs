@@ -4,7 +4,7 @@ using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.WorldBuilding;
 
-namespace InfernumAbyssGenPatch;
+namespace InfernumAbyssGenerationPatch;
 
 public class WorldGenSystem : ModSystem
 {
@@ -16,7 +16,7 @@ public class WorldGenSystem : ModSystem
             tasks.Insert(++finalCleanupIndex, new PassLegacy("Adjust Abyss Liquid",
                 (progress, config) =>
                 {
-                    progress.Message = Language.GetTextValue($"Mods.InfernumAbyssGenPatch.Message");
+                    progress.Message = Language.GetTextValue($"Mods.InfernumAbyssGenerationPatch.Message");
                     AbyssGen.ChangeLavaToWater();
                 }));
         }

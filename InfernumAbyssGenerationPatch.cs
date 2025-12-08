@@ -3,11 +3,11 @@ using System;
 using System.Reflection;
 using Terraria.ModLoader;
 
-namespace InfernumAbyssGenPatch;
+namespace InfernumAbyssGenerationPatch;
 
-public class InfernumAbyssGenPatch : Mod
+public class InfernumAbyssGenerationPatch : Mod
 {
-    public static InfernumAbyssGenPatch Instance => ModContent.GetInstance<InfernumAbyssGenPatch>();
+    public static InfernumAbyssGenerationPatch Instance => ModContent.GetInstance<InfernumAbyssGenerationPatch>();
 
     public override void Load()
     {

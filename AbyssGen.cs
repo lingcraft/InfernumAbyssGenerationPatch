@@ -27,7 +27,7 @@ using static XPT.Core.Audio.MP3Sharp.Decoding.Decoder;
 
 //using LumUtils = Luminance.Common.Utilities.Utilities;
 
-namespace InfernumAbyssGenPatch;
+namespace InfernumAbyssGenerationPatch;
 
 public static class AbyssGen
 {
