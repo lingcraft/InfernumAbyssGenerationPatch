@@ -1,0 +1,4 @@
+displayName = Infernum Abyss Generation Patch
+author = lingcraft
+version = 0.1
+modReferences = InfernumMode
