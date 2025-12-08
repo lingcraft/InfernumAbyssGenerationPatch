@@ -1,6 +1,7 @@
 <h1 align="center">灾厄炼狱模式深渊生成补丁</h1>
 
 <div align="center">
+
 [更新日志](changelog.md)
 
 修复灾厄炼狱模式使用 don't dig up 或 get fixed boi 种子生成世界时深渊生成失败的问题
