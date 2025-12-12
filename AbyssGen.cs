@@ -1,6 +1,4 @@
-﻿using Luminance.Common.Utilities;
-
-namespace InfernumAbyssGenerationPatch;
+﻿namespace InfernumAbyssGenerationPatch;
 
 public static class AbyssGen
 {

@@ -16,6 +16,7 @@ global using Terraria.GameContent.Generation;
 global using static Microsoft.Xna.Framework.MathHelper;
 global using static System.MathF;
 global using Luminance.Core.Hooking;
+global using Luminance.Common.Utilities;
 global using MonoMod.Cil;
 
 namespace InfernumAbyssGenerationPatch;
