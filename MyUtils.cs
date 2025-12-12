@@ -1,10 +1,22 @@
 ﻿#nullable enable
 global using static InfernumAbyssGenerationPatch.MyUtils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using Terraria.ModLoader;
+global using Microsoft.Xna.Framework;
+global using System;
+global using System.Collections.Generic;
+global using System.Reflection;
+global using System.Linq;
+global using Terraria;
+global using Terraria.ID;
+global using Terraria.Localization;
+global using Terraria.ModLoader;
+global using Terraria.ObjectData;
+global using Terraria.Utilities;
+global using Terraria.WorldBuilding;
+global using Terraria.GameContent.Generation;
+global using static Microsoft.Xna.Framework.MathHelper;
+global using static System.MathF;
+global using Luminance.Core.Hooking;
+global using MonoMod.Cil;
 
 namespace InfernumAbyssGenerationPatch;
 
@@ -15,15 +27,30 @@ public class MyUtils
     internal static Mod? LuminanceMod;
     internal static readonly Dictionary<string, Type> ClassCache = new();
     internal static readonly Dictionary<string, MethodInfo> MethodCache = new();
-    internal static readonly Dictionary<string, MemberInfo> FieldCache = new();
+    internal static readonly Dictionary<string, FieldInfo> FieldCache = new();
+    internal static readonly Dictionary<string, PropertyInfo> PropertyCache = new();
     internal static readonly Dictionary<string, ushort> IdCache = new();
-    internal const BindingFlags DefaultFlags = BindingFlags.Public | BindingFlags.Static;
+
+    internal const BindingFlags DefaultFlags =
+        BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+
+    #region 文本
+
+    internal static string GetText(string str, params object[] arg)
+    {
+        return Language.GetTextValue($"Mods.InfernumAbyssGenerationPatch.{str}", arg);
+    }
+
+    #endregion 文本
+
+    #region 反射
 
     internal static void ClearCache()
     {
         ClassCache.Clear();
         MethodCache.Clear();
         FieldCache.Clear();
+        PropertyCache.Clear();
         IdCache.Clear();
     }
 
@@ -34,9 +61,8 @@ public class MyUtils
             return cachedClassInfo;
         }
 
-        var modCode = (classPath.StartsWith("Infernum") ? InfernumMod :
-            classPath.StartsWith("Calamity") ? CalamityMod : LuminanceMod)?.Code;
-        var newClassInfo = modCode?.GetType(classPath);
+        var newClassInfo = (classPath.StartsWith("Infernum") ? InfernumMod :
+            classPath.StartsWith("Calamity") ? CalamityMod : LuminanceMod)?.Code?.GetType(classPath);
         if (newClassInfo is null)
         {
             return null;
@@ -47,7 +73,7 @@ public class MyUtils
     }
 
     internal static MethodInfo? GetMethod(string classPath, string methodName,
-        Type[]? argTypes = null, BindingFlags bindingFlags = DefaultFlags)
+        BindingFlags bindingFlags = DefaultFlags, Type[]? argTypes = null)
     {
         var methodPath = $"{classPath}.{methodName}";
         if (MethodCache.TryGetValue(methodPath, out var cachedMethodInfo))
@@ -55,10 +81,9 @@ public class MyUtils
             return cachedMethodInfo;
         }
 
-        var classInfo = GetClass(classPath);
         var newMethodInfo = argTypes is null
-            ? classInfo?.GetMethod(methodName, bindingFlags)
-            : classInfo?.GetMethod(methodName, bindingFlags, argTypes);
+            ? GetClass(classPath)?.GetMethod(methodName, bindingFlags)
+            : GetClass(classPath)?.GetMethod(methodName, bindingFlags, argTypes);
         if (newMethodInfo is null)
         {
             return null;
@@ -68,26 +93,33 @@ public class MyUtils
         return newMethodInfo;
     }
 
-    internal static T? InvokeMethod<T>(string classPath, string methodName,
-        Type[]? argTypes = null, BindingFlags bindingFlags = DefaultFlags, params object[] args)
+    internal static TResult? InvokeMethod<TResult>(string classPath, string methodName,
+        BindingFlags bindingFlags = DefaultFlags, params object[] args)
     {
-        var methodInfo = GetMethod(classPath, methodName, argTypes, bindingFlags);
+        var methodInfo = GetMethod(classPath, methodName, bindingFlags, args.Select(arg => arg.GetType()).ToArray());
         var result = methodInfo?.Invoke(null, args);
         if (result is null)
         {
             return default;
         }
 
-        return (T)result;
+        return (TResult)result;
     }
 
-    internal static T? InvokeMethod<T>(string classPath, string methodName, params object[] args) =>
-        InvokeMethod<T>(classPath, methodName, null, DefaultFlags, args);
+    internal static TResult? InvokeMethod<TResult>(string classPath, string methodName, params object[] args) =>
+        InvokeMethod<TResult>(classPath, methodName, DefaultFlags, args);
 
-    internal static T? InvokeMethod<T>(string classPath, string methodName, Type[] argTypes, params object[] args) =>
-        InvokeMethod<T>(classPath, methodName, argTypes, DefaultFlags, args);
+    internal static void InvokeMethod(string classPath, string methodName,
+        BindingFlags bindingFlags = DefaultFlags, params object[] args)
+    {
+        var methodInfo = GetMethod(classPath, methodName, bindingFlags, args.Select(arg => arg.GetType()).ToArray());
+        methodInfo?.Invoke(null, args);
+    }
 
-    internal static T? InvokeConstructor<T>(string classPath, string? innerClassName, params object[] args)
+    internal static void InvokeMethod(string classPath, string methodName, params object[] args) =>
+        InvokeMethod(classPath, methodName, DefaultFlags, args);
+
+    internal static TInstance? InvokeConstructor<TInstance>(string classPath, string? innerClassName, params object[] args)
     {
         var classInfo = GetClass(classPath);
         if (innerClassName is not null)
@@ -103,69 +135,86 @@ public class MyUtils
             return default;
         }
 
-        return (T)instance;
+        return (TInstance)instance;
     }
 
-    internal static T? InvokeConstructor<T>(string classPath, params object[] args) =>
-        InvokeConstructor<T>(classPath, null, args);
+    internal static TInstance? InvokeConstructor<TInstance>(string classPath, params object[] args) =>
+        InvokeConstructor<TInstance>(classPath, null, args);
 
-    internal static T? GetField<T>(string classPath, string fieldName,
-        BindingFlags bindingFlags = DefaultFlags) where T : MemberInfo
+    internal static FieldInfo? GetField(string classPath, string fieldName,
+        BindingFlags bindingFlags = DefaultFlags)
     {
         var fieldPath = $"{classPath}.{fieldName}";
         if (FieldCache.TryGetValue(fieldPath, out var cachedFieldInfo))
         {
-            return (T)cachedFieldInfo;
+            return cachedFieldInfo;
         }
 
-        var classInfo = GetClass(classPath);
-        MemberInfo? newFieldInfo = typeof(T) == typeof(FieldInfo) ? classInfo?.GetField(fieldName, bindingFlags) :
-            typeof(T) == typeof(PropertyInfo) ? classInfo?.GetProperty(fieldName, bindingFlags) : null;
+        var newFieldInfo = GetClass(classPath)?.GetField(fieldName, bindingFlags);
         if (newFieldInfo is null)
         {
             return null;
         }
 
         FieldCache.Add(fieldPath, newFieldInfo);
-        return (T)newFieldInfo;
+        return newFieldInfo;
     }
 
-    internal static FieldInfo? GetField(string classPath, string fieldName,
-        BindingFlags bindingFlags = DefaultFlags) => GetField<FieldInfo>(classPath, fieldName, bindingFlags);
-
-    internal static TV? GetValue<T, TV>(string classPath, string fieldName,
-        BindingFlags bindingFlags = DefaultFlags) where T : MemberInfo
+    internal static PropertyInfo? GetProperty(string classPath, string propertyName,
+        BindingFlags bindingFlags = DefaultFlags)
     {
-        var fieldInfo = GetField<T>(classPath, fieldName, bindingFlags);
-        var fieldValue = typeof(T) == typeof(FieldInfo) ? (fieldInfo as FieldInfo)?.GetValue(null) :
-            typeof(T) == typeof(PropertyInfo) ? (fieldInfo as PropertyInfo)?.GetValue(null) : null;
+        var propertyPath = $"{classPath}.{propertyName}";
+        if (PropertyCache.TryGetValue(propertyPath, out var cachedPropertyInfo))
+        {
+            return cachedPropertyInfo;
+        }
+
+        var newFieldInfo = GetClass(classPath)?.GetProperty(propertyName, bindingFlags);
+        if (newFieldInfo is null)
+        {
+            return null;
+        }
+
+        PropertyCache.Add(propertyPath, newFieldInfo);
+        return newFieldInfo;
+    }
+
+    internal static TResult? GetValue<TFieldType, TResult>(string classPath, string fieldName,
+        BindingFlags bindingFlags = DefaultFlags) where TFieldType : MemberInfo
+    {
+        var fieldValue = typeof(TFieldType) == typeof(FieldInfo)
+            ? GetField(classPath, fieldName, bindingFlags)?.GetValue(null)
+            : GetProperty(classPath, fieldName, bindingFlags)?.GetValue(null);
         if (fieldValue is null)
         {
             return default;
         }
 
-        return (TV)fieldValue;
+        return (TResult)fieldValue;
     }
 
-    internal static TV? GetValue<TV>(string classPath, string fieldName,
-        BindingFlags bindingFlags = DefaultFlags) => GetValue<FieldInfo, TV>(classPath, fieldName, bindingFlags);
+    internal static TResult? GetValue<TResult>(string classPath, string fieldName,
+        BindingFlags bindingFlags = DefaultFlags) => GetValue<FieldInfo, TResult>(classPath, fieldName, bindingFlags);
 
-    internal static void SetValue<T>(string classPath, string fieldName, object value,
-        BindingFlags bindingFlags = DefaultFlags) where T : MemberInfo
+    internal static void SetValue<TFieldType>(string classPath, string fieldName, object value,
+        BindingFlags bindingFlags = DefaultFlags) where TFieldType : MemberInfo
     {
-        var fieldInfo = GetField<T>(classPath, fieldName, bindingFlags);
-        if (typeof(T) == typeof(FieldInfo))
+        if (typeof(TFieldType) == typeof(FieldInfo))
         {
-            (fieldInfo as FieldInfo)?.SetValue(null, value);
+            GetField(classPath, fieldName, bindingFlags)?.SetValue(null, value);
         }
-        else if (typeof(T) == typeof(PropertyInfo))
+        else
         {
-            (fieldInfo as PropertyInfo)?.SetValue(null, value);
+            GetProperty(classPath, fieldName, bindingFlags)?.SetValue(null, value);
         }
     }
 
     internal static void SetValue(string classPath, string fieldName, object value,
         BindingFlags bindingFlags = DefaultFlags) => SetValue<FieldInfo>(classPath, fieldName, value, bindingFlags);
+
+    #endregion 反射
+
+    #region 标识
 
     internal static ushort GetId(string typeName, string classPath)
     {
@@ -201,4 +250,6 @@ public class MyUtils
     internal static ushort GetTileId(string classPath) => GetId("TileType", classPath);
 
     internal static ushort GetWallId(string classPath) => GetId("WallType", classPath);
+
+    #endregion 标识
 }

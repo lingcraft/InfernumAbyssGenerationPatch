@@ -1,12 +1,20 @@
-using FullSerializer.Internal;
+using Luminance.Core.Hooking;
 using System;
-using System.Reflection;
+using Terraria;
 using Terraria.ModLoader;
 
 namespace InfernumAbyssGenerationPatch;
 
 public class InfernumAbyssGenerationPatch : Mod
 {
+    private class DisplayNameUpdater : ModSystem
+    {
+        public override void OnLocalizationsLoaded()
+        {
+            Instance.DisplayName = GetText("ModName");
+        }
+    }
+
     public static InfernumAbyssGenerationPatch Instance => ModContent.GetInstance<InfernumAbyssGenerationPatch>();
 
     public override void Load()
@@ -15,22 +23,16 @@ public class InfernumAbyssGenerationPatch : Mod
         {
             return;
         }
+
         if (!ModLoader.TryGetMod("CalamityMod", out CalamityMod))
         {
             return;
         }
+
         if (!ModLoader.TryGetMod("Luminance", out LuminanceMod))
         {
             return;
         }
-
-        var generate = GetMethod("InfernumMode.Content.WorldGeneration.CustomAbyss", "Generate");
-        if (generate is null)
-        {
-            return;
-        }
-
-        MonoModHooks.Add(generate, (Action orig) => AbyssGen.Generate());
     }
 
     public override void Unload()

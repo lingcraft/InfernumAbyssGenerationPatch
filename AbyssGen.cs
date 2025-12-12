@@ -1,16 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using Terraria;
-using Terraria.ID;
-using Terraria.ModLoader;
-using Terraria.ObjectData;
-using Terraria.Utilities;
-using Terraria.WorldBuilding;
-using static Microsoft.Xna.Framework.MathHelper;
-using static System.MathF;
+﻿using Luminance.Common.Utilities;
 
 namespace InfernumAbyssGenerationPatch;
 
@@ -22,17 +10,6 @@ public static class AbyssGen
     public static int MinAbyssWidth => MaxAbyssWidth / 5;
 
     public static int MaxAbyssWidth => BiomeWidth + 130;
-
-    public static int AbyssTop => Main.remixWorld ? YStart - 10 : YStart + BlockDepth - 44;
-
-    public static int Layer2Top =>
-        (int)(Main.remixWorld ? YStart * 0.878f : Main.rockLayer + Main.maxTilesY * 0.084f);
-
-    public static int Layer3Top =>
-        (int)(Main.remixWorld ? YStart * 0.676f : Main.rockLayer + Main.maxTilesY * 0.184f);
-
-    public static int Layer4Top =>
-        (int)(Main.remixWorld ? YStart * 0.419f : Main.rockLayer + Main.maxTilesY * 0.33f);
 
     // 0-1 value that determines the threshold for layer 1 spaghetti caves being carved out. At 0, no tiles are carved out, at 1, all tiles are carved out.
     // This is used in the formula 'abs(noise(x, y)) < r' to determine whether the cave should remove tiles.
@@ -98,7 +75,22 @@ public static class AbyssGen
     // vanilla caverns to be visible from within the abyss, for immersion reasons.
     public const int WallThickness = 70;
 
-    // ========================================反射字段========================================
+    #endregion Fields and Properties
+
+    #region 修改字段
+
+    public static int AbyssTop => Main.remixWorld ? YStart - 10 : YStart + BlockDepth - 44;
+
+    public static int Layer2Top => (int)(Main.remixWorld ? YStart * 0.878f : Main.rockLayer + Main.maxTilesY * 0.084f);
+
+    public static int Layer3Top => (int)(Main.remixWorld ? YStart * 0.676f : Main.rockLayer + Main.maxTilesY * 0.184f);
+
+    public static int Layer4Top => (int)(Main.remixWorld ? YStart * 0.419f : Main.rockLayer + Main.maxTilesY * 0.33f);
+
+    #endregion 修改字段
+
+    #region 反射字段
+
     public static int BiomeWidth => GetValue<PropertyInfo, int>("CalamityMod.World.SulphurousSea", "BiomeWidth");
 
     public static int YStart => GetValue<PropertyInfo, int>("CalamityMod.World.SulphurousSea", "YStart");
@@ -154,13 +146,11 @@ public static class AbyssGen
         get => GetValue<bool>("CalamityMod.World.Abyss", "AtLeftSideOfWorld");
         set => SetValue("CalamityMod.World.Abyss", "AtLeftSideOfWorld", value);
     }
-    // ========================================================================================
 
-    #endregion Fields and Properties
+    #endregion 反射字段
 
-    #region Placement Methods
+    #region 反射方法
 
-    // ========================================反射方法========================================
     public static int GetActualX(int x) => InvokeMethod<int>("CalamityMod.World.SulphurousSea", "GetActualX", x);
 
     public static float FractalBrownianMotion(float x, float y, int seed, int octaves, float gain = 0.5f,
@@ -173,13 +163,22 @@ public static class AbyssGen
 
     public static Point GetGroundPositionFrom(Point p, GenSearch search = null) =>
         InvokeMethod<Point>("InfernumMode.Utilities", "GetGroundPositionFrom",
-            [typeof(Point), typeof(GenSearch)], p, search);
+            p, search);
 
-    public static float?
-        DistanceToTileCollisionHit(Vector2 startingPoint, Vector2 checkDirection, int giveUpLimit = 500) =>
-        InvokeMethod<float>("Luminance.Common.Utilities.Utilities", "DistanceToTileCollisionHit",
-            startingPoint, checkDirection, giveUpLimit);
-    // ========================================================================================
+    public static bool InAnySubworld() => InvokeMethod<bool>("CalamityMod.WeakReferenceSupport", "InAnySubworld");
+
+    public static bool MeetsBaseAbyssRequirement(Player player, out int playerYTileCoords)
+    {
+        var method = GetMethod("CalamityMod.BiomeManagers.AbyssLayer1Biome", "MeetsBaseAbyssRequirement");
+        var args = new object[] { player, null };
+        bool result = (bool)method?.Invoke(null, args)!;
+        playerYTileCoords = (int)args[1];
+        return result;
+    }
+
+    #endregion 反射方法
+
+    #region Placement Methods
 
     public static void Generate()
     {
@@ -265,7 +264,7 @@ public static class AbyssGen
             for (int y = bottomOfSulphSea; y > topOfSulphSea; y--)
             {
                 float yCompletion = Utils.GetLerpValue(bottomOfSulphSea, topOfSulphSea - 1f, y, true);
-                int width = (int)Utils.Remap(yCompletion, 0f, 0.33f, 1f, 36f) + WorldGen.genRand.Next(-1, 2);
+                int width = (int)Utils.Remap(yCompletion, 0f, 0.33f, 1f, 36f) + Terraria.WorldGen.genRand.Next(-1, 2);
 
                 // Carve out water through the sulph sea.
                 for (int dx = -width; dx < width; dx++)
@@ -283,7 +282,7 @@ public static class AbyssGen
             for (int y = topOfSulphSea; y < bottomOfSulphSea; y++)
             {
                 float yCompletion = Utils.GetLerpValue(topOfSulphSea, bottomOfSulphSea - 1f, y, true);
-                int width = (int)Utils.Remap(yCompletion, 0f, 0.33f, 1f, 36f) + WorldGen.genRand.Next(-1, 2);
+                int width = (int)Utils.Remap(yCompletion, 0f, 0.33f, 1f, 36f) + Terraria.WorldGen.genRand.Next(-1, 2);
 
                 // Carve out water through the sulph sea.
                 for (int dx = -width; dx < width; dx++)
@@ -309,7 +308,7 @@ public static class AbyssGen
 
         for (int c = 0; c < Layer1SpaghettiCaveCarveOutThresholds.Length; c++)
         {
-            int caveSeed = WorldGen.genRand.Next();
+            int caveSeed = Terraria.WorldGen.genRand.Next();
             if (Main.remixWorld)
             {
                 for (int y = topOfLayer1; y > bottomOfLayer1; y--)
@@ -434,8 +433,8 @@ public static class AbyssGen
 
     public static void GenerateLayer1SulphurousShale(Rectangle layer1Area)
     {
-        int sandstoneSeed = WorldGen.genRand.Next();
-        AbyssLayer1ForestSeed = WorldGen.genRand.Next();
+        int sandstoneSeed = Terraria.WorldGen.genRand.Next();
+        AbyssLayer1ForestSeed = Terraria.WorldGen.genRand.Next();
 
         ushort abyssGravelID = GetTileId("CalamityMod.Tiles.Abyss.AbyssGravel");
         ushort sulphuricShaleID = GetTileId("CalamityMod.Tiles.Abyss.SulphurousShale");
@@ -479,7 +478,7 @@ public static class AbyssGen
                     // Make the sandstone appearance chance dependant on the edge score.
                     sulphurousConvertChance *= Utils.GetLerpValue(4f, 11f, getEdgeScore(x, y), true);
 
-                    if (WorldGen.genRand.NextFloat() > sulphurousConvertChance || sulphurousConvertChance < 0.57f)
+                    if (Terraria.WorldGen.genRand.NextFloat() > sulphurousConvertChance || sulphurousConvertChance < 0.57f)
                         continue;
 
                     // Convert to sulphuric shale as necessary.
@@ -487,7 +486,7 @@ public static class AbyssGen
                     {
                         for (int dy = -2; dy <= 2; dy++)
                         {
-                            if (WorldGen.InWorld(x + dx, y + dy))
+                            if (Terraria.WorldGen.InWorld(x + dx, y + dy))
                             {
                                 if (Framing.GetTileSafely(x + dx, y + dy).TileType == abyssGravelID)
                                 {
@@ -496,7 +495,7 @@ public static class AbyssGen
                                     // Encourage the growth of ground vines.
                                     if (InsideOfLayer1Forest(new(x + dx, y + dy)))
                                     {
-                                        int vineHeight = WorldGen.genRand.Next(9, 12);
+                                        int vineHeight = Terraria.WorldGen.genRand.Next(9, 12);
                                         Point vinePosition = new(x + dx, y + dy);
 
                                         for (int ddy = 0; ddy < vineHeight; ddy++)
@@ -527,7 +526,7 @@ public static class AbyssGen
                     // Make the sandstone appearance chance dependant on the edge score.
                     sulphurousConvertChance *= Utils.GetLerpValue(4f, 11f, getEdgeScore(x, y), true);
 
-                    if (WorldGen.genRand.NextFloat() > sulphurousConvertChance || sulphurousConvertChance < 0.57f)
+                    if (Terraria.WorldGen.genRand.NextFloat() > sulphurousConvertChance || sulphurousConvertChance < 0.57f)
                         continue;
 
                     // Convert to sulphuric shale as necessary.
@@ -535,7 +534,7 @@ public static class AbyssGen
                     {
                         for (int dy = -2; dy <= 2; dy++)
                         {
-                            if (WorldGen.InWorld(x + dx, y + dy))
+                            if (Terraria.WorldGen.InWorld(x + dx, y + dy))
                             {
                                 if (Framing.GetTileSafely(x + dx, y + dy).TileType == abyssGravelID)
                                 {
@@ -544,7 +543,7 @@ public static class AbyssGen
                                     // Encourage the growth of ground vines.
                                     if (InsideOfLayer1Forest(new(x + dx, y + dy)))
                                     {
-                                        int vineHeight = WorldGen.genRand.Next(9, 12);
+                                        int vineHeight = Terraria.WorldGen.genRand.Next(9, 12);
                                         Point vinePosition = new(x + dx, y + dy);
 
                                         for (int ddy = 0; ddy < vineHeight; ddy++)
@@ -581,11 +580,11 @@ public static class AbyssGen
                     Tile above = Framing.GetTileSafely(x, y - 1);
 
                     // Randomly create kelp upward.
-                    if (WorldGen.SolidTile(t) && !above.HasTile &&
-                        WorldGen.genRand.NextBool(Layer1KelpCreationChance /
-                                                  (InsideOfLayer1Forest(new(x, y)) ? 4 : 1)))
+                    if (Terraria.WorldGen.SolidTile(t) && !above.HasTile &&
+                        Terraria.WorldGen.genRand.NextBool(Layer1KelpCreationChance /
+                                                           (InsideOfLayer1Forest(new(x, y)) ? 4 : 1)))
                     {
-                        int kelpHeight = WorldGen.genRand.Next(6, 12);
+                        int kelpHeight = Terraria.WorldGen.genRand.Next(6, 12);
                         bool areaIsOccupied = false;
 
                         // Check if the area where the kelp would be created is occupied.
@@ -612,7 +611,7 @@ public static class AbyssGen
                                 Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().TileFrameY = 0;
                             else
                                 Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().TileFrameY =
-                                    (short)(WorldGen.genRand.Next(1, 4) * 18);
+                                    (short)(Terraria.WorldGen.genRand.Next(1, 4) * 18);
 
                             Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().IsHalfBlock = false;
                             Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().Slope = SlopeType.Solid;
@@ -630,11 +629,11 @@ public static class AbyssGen
                     Tile above = Framing.GetTileSafely(x, y - 1);
 
                     // Randomly create kelp upward.
-                    if (WorldGen.SolidTile(t) && !above.HasTile &&
-                        WorldGen.genRand.NextBool(Layer1KelpCreationChance /
-                                                  (InsideOfLayer1Forest(new(x, y)) ? 4 : 1)))
+                    if (Terraria.WorldGen.SolidTile(t) && !above.HasTile &&
+                        Terraria.WorldGen.genRand.NextBool(Layer1KelpCreationChance /
+                                                           (InsideOfLayer1Forest(new(x, y)) ? 4 : 1)))
                     {
-                        int kelpHeight = WorldGen.genRand.Next(6, 12);
+                        int kelpHeight = Terraria.WorldGen.genRand.Next(6, 12);
                         bool areaIsOccupied = false;
 
                         // Check if the area where the kelp would be created is occupied.
@@ -661,7 +660,7 @@ public static class AbyssGen
                                 Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().TileFrameY = 0;
                             else
                                 Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().TileFrameY =
-                                    (short)(WorldGen.genRand.Next(1, 4) * 18);
+                                    (short)(Terraria.WorldGen.genRand.Next(1, 4) * 18);
 
                             Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().IsHalfBlock = false;
                             Main.tile[x, y - dy - 1].Get<TileWallWireStateData>().Slope = SlopeType.Solid;
@@ -677,14 +676,14 @@ public static class AbyssGen
     {
         for (int i = 0; i < 18; i++)
         {
-            int x = GetActualX(WorldGen.genRand.Next(layer1Area.Left + 90, layer1Area.Right - 70));
+            int x = GetActualX(Terraria.WorldGen.genRand.Next(layer1Area.Left + 90, layer1Area.Right - 70));
             int y = Main.remixWorld
-                ? WorldGen.genRand.Next(layer1Area.Bottom + 15, layer1Area.Top - 40)
-                : WorldGen.genRand.Next(layer1Area.Top + 40, layer1Area.Bottom - 15);
+                ? Terraria.WorldGen.genRand.Next(layer1Area.Bottom + 15, layer1Area.Top - 40)
+                : Terraria.WorldGen.genRand.Next(layer1Area.Top + 40, layer1Area.Bottom - 15);
             Point p = new(x, y);
 
             // Make the surrounding pyre molten.
-            WorldUtils.Gen(p, new Shapes.Circle(WorldGen.genRand.Next(14, 18)), Actions.Chain(
+            WorldUtils.Gen(p, new Shapes.Circle(Terraria.WorldGen.genRand.Next(14, 18)), Actions.Chain(
             [
                 new Modifiers.RadialDither(12f, 18f),
                 new Modifiers.Conditions(new Conditions.IsTile(GetTileId("CalamityMod.Tiles.Abyss.AbyssGravel"),
@@ -708,10 +707,10 @@ public static class AbyssGen
             if (tilesLeft.Count <= 0)
                 break;
 
-            int x = GetActualX(WorldGen.genRand.Next(layer1Area.Left + 72, layer1Area.Right - 72));
+            int x = GetActualX(Terraria.WorldGen.genRand.Next(layer1Area.Left + 72, layer1Area.Right - 72));
             int y = Main.remixWorld
-                ? WorldGen.genRand.Next(layer1Area.Bottom + 40, layer1Area.Top - 48)
-                : WorldGen.genRand.Next(layer1Area.Top + 48, layer1Area.Bottom - 40);
+                ? Terraria.WorldGen.genRand.Next(layer1Area.Bottom + 40, layer1Area.Top - 48)
+                : Terraria.WorldGen.genRand.Next(layer1Area.Top + 48, layer1Area.Bottom - 40);
 
             bool areaIsOccupied = false;
             bool solidGround = true;
@@ -728,7 +727,7 @@ public static class AbyssGen
                     }
                 }
 
-                if (!WorldGen.SolidTile(Framing.GetTileSafely(x + dx, y + 1)) ||
+                if (!Terraria.WorldGen.SolidTile(Framing.GetTileSafely(x + dx, y + 1)) ||
                     !Framing.GetTileSafely(x + dx, y + 1).HasTile)
                     solidGround = false;
             }
@@ -770,8 +769,8 @@ public static class AbyssGen
         for (int i = 0; i < trenchCount; i++)
         {
             int trenchX = (int)Lerp(104f, maxWidth * 0.7f, i / (float)(trenchCount - 1f)) +
-                          WorldGen.genRand.Next(-15, 15);
-            int trenchY = topOfLayer2 + Main.remixWorld.ToDirectionInt() * WorldGen.genRand.Next(25, 35);
+                          Terraria.WorldGen.genRand.Next(-15, 15);
+            int trenchY = topOfLayer2 + Main.remixWorld.ToDirectionInt() * Terraria.WorldGen.genRand.Next(25, 35);
             trenchTops.Add(new(GetActualX(trenchX), trenchY));
             trenchBottoms.Add(GenerateLayer2Trench(new(GetActualX(trenchX), trenchY),
                 bottomOfLayer2 - Main.remixWorld.ToDirectionInt() * 4));
@@ -791,10 +790,10 @@ public static class AbyssGen
         ushort voidstoneWallID = GetWallId("CalamityMod.Walls.VoidstoneWallUnsafe");
 
         // Descend downward, carving out gravel.
-        int startingWidth = WorldGen.genRand.Next(MinStartingTrenchWidth, MaxStartingTrenchWidth);
-        int endingWidth = WorldGen.genRand.Next(MinEndingTrenchWidth, MaxEndingTrenchWidth);
-        int offsetSeed = WorldGen.genRand.Next();
-        int widthSeed = WorldGen.genRand.Next();
+        int startingWidth = Terraria.WorldGen.genRand.Next(MinStartingTrenchWidth, MaxStartingTrenchWidth);
+        int endingWidth = Terraria.WorldGen.genRand.Next(MinEndingTrenchWidth, MaxEndingTrenchWidth);
+        int offsetSeed = Terraria.WorldGen.genRand.Next();
+        int widthSeed = Terraria.WorldGen.genRand.Next();
 
         if (Main.remixWorld)
         {
@@ -813,14 +812,14 @@ public static class AbyssGen
                         currentPoint.Y * TrenchOffsetNoiseMagnificationFactor, offsetSeed, 5) * MaxTrenchOffset);
 
                 // Occasionally carve out lumenyl and voidstone shells at the edges of the current point.
-                if (WorldGen.genRand.NextBool(50) && currentPoint.Y > cutOffPoint + width + 8 &&
+                if (Terraria.WorldGen.genRand.NextBool(50) && currentPoint.Y > cutOffPoint + width + 8 &&
                     currentPoint.Y <= start.Y - 30)
                 {
-                    int shellRadius = width + WorldGen.genRand.Next(4);
+                    int shellRadius = width + Terraria.WorldGen.genRand.Next(4);
                     Point voidstoneShellCenter =
                         new(
                             currentPoint.X + currentOffset +
-                            WorldGen.genRand.NextBool().ToDirectionInt() * width / 2 + WorldGen.genRand.Next(-4, 4),
+                            Terraria.WorldGen.genRand.NextBool().ToDirectionInt() * width / 2 + Terraria.WorldGen.genRand.Next(-4, 4),
                             currentPoint.Y - shellRadius - 1);
                     voidstoneShellCenter.X = Utils.Clamp(voidstoneShellCenter.X, 35, Main.maxTilesX - 35);
 
@@ -863,14 +862,14 @@ public static class AbyssGen
                         currentPoint.Y * TrenchOffsetNoiseMagnificationFactor, offsetSeed, 5) * MaxTrenchOffset);
 
                 // Occasionally carve out lumenyl and voidstone shells at the edges of the current point.
-                if (WorldGen.genRand.NextBool(50) && currentPoint.Y < cutOffPoint - width - 8 &&
+                if (Terraria.WorldGen.genRand.NextBool(50) && currentPoint.Y < cutOffPoint - width - 8 &&
                     currentPoint.Y >= start.Y + 30)
                 {
-                    int shellRadius = width + WorldGen.genRand.Next(4);
+                    int shellRadius = width + Terraria.WorldGen.genRand.Next(4);
                     Point voidstoneShellCenter =
                         new(
                             currentPoint.X + currentOffset +
-                            WorldGen.genRand.NextBool().ToDirectionInt() * width / 2 + WorldGen.genRand.Next(-4, 4),
+                            Terraria.WorldGen.genRand.NextBool().ToDirectionInt() * width / 2 + Terraria.WorldGen.genRand.Next(-4, 4),
                             currentPoint.Y + shellRadius + 1);
                     voidstoneShellCenter.X = Utils.Clamp(voidstoneShellCenter.X, 35, Main.maxTilesX - 35);
 
@@ -911,8 +910,8 @@ public static class AbyssGen
             Utils.Swap(ref topLeft, ref bottomRight);
 
         // Generate a ragged cavern between the trenches.
-        int width = WorldGen.genRand.Next(MinEndingTrenchWidth, MaxEndingTrenchWidth) / 3;
-        int offsetSeed = WorldGen.genRand.Next();
+        int width = Terraria.WorldGen.genRand.Next(MinEndingTrenchWidth, MaxEndingTrenchWidth) / 3;
+        int offsetSeed = Terraria.WorldGen.genRand.Next();
         Point currentPoint = topLeft;
 
         while (!currentPoint.ToVector2().WithinRange(bottomRight.ToVector2(), 18f))
@@ -948,9 +947,9 @@ public static class AbyssGen
 
         for (int i = 0; i < Layer2WildlifeSpawnAttempts; i++)
         {
-            Point potentialPosition = new(GetActualX(WorldGen.genRand.Next(area.Left + 30, area.Right - 30)),
-                WorldGen.genRand.Next(Math.Min(area.Top, area.Bottom), Math.Max(area.Top, area.Bottom)));
-            WorldGen.PlaceTile(potentialPosition.X, potentialPosition.Y, WorldGen.genRand.Next(wildlifeVariants));
+            Point potentialPosition = new(GetActualX(Terraria.WorldGen.genRand.Next(area.Left + 30, area.Right - 30)),
+                Terraria.WorldGen.genRand.Next(Math.Min(area.Top, area.Bottom), Math.Max(area.Top, area.Bottom)));
+            Terraria.WorldGen.PlaceTile(potentialPosition.X, potentialPosition.Y, Terraria.WorldGen.genRand.Next(wildlifeVariants));
         }
 
         GenerateScenicTilesInArea(area, 10, 1, [GetTileId("CalamityMod.Tiles.Abyss.AbyssGravel")],
@@ -1006,8 +1005,8 @@ public static class AbyssGen
         // Initialize cave positions.
         for (int i = 0; i < trenchBottoms.Count; i++)
         {
-            caveSeeds.Add(WorldGen.genRand.Next());
-            caveNoisePositions.Add(WorldGen.genRand.NextVector2Unit());
+            caveSeeds.Add(Terraria.WorldGen.genRand.Next());
+            caveNoisePositions.Add(Terraria.WorldGen.genRand.NextVector2Unit());
             caveEndPoints.Add(trenchBottoms[i]);
         }
 
@@ -1090,7 +1089,7 @@ public static class AbyssGen
         // Carve out finer, spaghetti caves.
         for (int c = 0; c < Layer3SpaghettiCaveCarveOutThresholds.Length; c++)
         {
-            int caveSeed = WorldGen.genRand.Next();
+            int caveSeed = Terraria.WorldGen.genRand.Next();
             if (Main.remixWorld)
             {
                 for (int y = topOfLayer3; y > bottomOfLayer3 + 14; y--)
@@ -1176,7 +1175,7 @@ public static class AbyssGen
         Rectangle layer3Area = new(1, topOfLayer3, maxWidth - WallThickness, bottomOfLayer3 - topOfLayer3);
         ClearOutStrayTiles(layer3Area);
 
-        AbyssLayer3CavernSeed = WorldGen.genRand.Next();
+        AbyssLayer3CavernSeed = Terraria.WorldGen.genRand.Next();
 
         // Generate pyre mantle in the hydrothermic zone.
         GenerateLayer3PyreMantle(layer3Area);
@@ -1222,8 +1221,8 @@ public static class AbyssGen
             if (tries >= 20000)
                 break;
 
-            Point potentialVentPosition = new(GetActualX(WorldGen.genRand.Next(area.Left + 30, area.Right - 30)),
-                WorldGen.genRand.Next(Math.Min(area.Top, area.Bottom), Math.Max(area.Top, area.Bottom)));
+            Point potentialVentPosition = new(GetActualX(Terraria.WorldGen.genRand.Next(area.Left + 30, area.Right - 30)),
+                Terraria.WorldGen.genRand.Next(Math.Min(area.Top, area.Bottom), Math.Max(area.Top, area.Bottom)));
             Tile t = Framing.GetTileSafely(potentialVentPosition.X, potentialVentPosition.Y);
 
             // Ignore placement positions that are already occupied.
@@ -1278,7 +1277,7 @@ public static class AbyssGen
             }
 
             // Make the surrounding pyre molten.
-            WorldUtils.Gen(floor, new Shapes.Circle(WorldGen.genRand.Next(15, 22)), Actions.Chain(
+            WorldUtils.Gen(floor, new Shapes.Circle(Terraria.WorldGen.genRand.Next(15, 22)), Actions.Chain(
             [
                 new Modifiers.Conditions(new Conditions.IsTile(GetTileId("CalamityMod.Tiles.Abyss.PyreMantle"))),
                 new Actions.SetTile(GetTileId("CalamityMod.Tiles.Abyss.PyreMantleMolten")),
@@ -1287,8 +1286,8 @@ public static class AbyssGen
             ]));
 
             // Generate a stand of scoria.
-            int moundHeight = WorldGen.genRand.Next(4, 9);
-            int scoriaGroundSize = WorldGen.genRand.Next(5, 7);
+            int moundHeight = Terraria.WorldGen.genRand.Next(4, 9);
+            int scoriaGroundSize = Terraria.WorldGen.genRand.Next(5, 7);
             WorldUtils.Gen(new(floor.X, floor.Y - Main.remixWorld.ToDirectionInt() * scoriaGroundSize / 2),
                 new Shapes.Slime(scoriaGroundSize), Actions.Chain(
                 [
@@ -1299,7 +1298,7 @@ public static class AbyssGen
                 new Actions.SetTile(gravelID, true),
             ]));
 
-            ushort ventID = (ushort)WorldGen.genRand.Next(new int[]
+            ushort ventID = (ushort)Terraria.WorldGen.genRand.Next(new int[]
             {
                 GetTileId("CalamityMod.Tiles.Abyss.AbyssAmbient.ThermalVent1"),
                 GetTileId("CalamityMod.Tiles.Abyss.AbyssAmbient.ThermalVent2"),
@@ -1343,8 +1342,8 @@ public static class AbyssGen
             if (tries >= 32000)
                 break;
 
-            Point potentialCrystalPosition = new(GetActualX(WorldGen.genRand.Next(area.Left + 30, area.Right - 30)),
-                WorldGen.genRand.Next(Math.Min(area.Top, area.Bottom), Math.Max(area.Top, area.Bottom)));
+            Point potentialCrystalPosition = new(GetActualX(Terraria.WorldGen.genRand.Next(area.Left + 30, area.Right - 30)),
+                Terraria.WorldGen.genRand.Next(Math.Min(area.Top, area.Bottom), Math.Max(area.Top, area.Bottom)));
             Tile t = Framing.GetTileSafely(potentialCrystalPosition.X, potentialCrystalPosition.Y);
 
             // Ignore placement positions that are already occupied.
@@ -1365,8 +1364,8 @@ public static class AbyssGen
                 continue;
             }
 
-            if (!WorldGen.SolidTile(left) && !WorldGen.SolidTile(right) && !WorldGen.SolidTile(top) &&
-                !WorldGen.SolidTile(bottom))
+            if (!Terraria.WorldGen.SolidTile(left) && !Terraria.WorldGen.SolidTile(right) && !Terraria.WorldGen.SolidTile(top) &&
+                !Terraria.WorldGen.SolidTile(bottom))
             {
                 i--;
                 continue;
@@ -1384,7 +1383,7 @@ public static class AbyssGen
             t.IsHalfBlock = false;
             t.Get<TileWallWireStateData>().Slope = SlopeType.Solid;
 
-            t.TileFrameX = (short)(WorldGen.genRand.Next(18) * 18);
+            t.TileFrameX = (short)(Terraria.WorldGen.genRand.Next(18) * 18);
 
             bool invalidPlacement = false;
 
@@ -1392,7 +1391,7 @@ public static class AbyssGen
             {
                 t.TileFrameY = 0;
                 if (largeCrystals &&
-                    (DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
+                    (Utilities.DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
                         -Vector2.UnitY, 25) ?? 500f) < 64f)
                     invalidPlacement = true;
             }
@@ -1400,7 +1399,7 @@ public static class AbyssGen
             {
                 t.TileFrameY = 18;
                 if (largeCrystals &&
-                    (DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
+                    (Utilities.DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
                         Vector2.UnitY, 25) ?? 500f) < 64f)
                     invalidPlacement = true;
             }
@@ -1408,7 +1407,7 @@ public static class AbyssGen
             {
                 t.TileFrameY = 36;
                 if (largeCrystals &&
-                    (DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
+                    (Utilities.DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
                         -Vector2.UnitX, 25) ?? 500f) < 64f)
                     invalidPlacement = true;
             }
@@ -1416,7 +1415,7 @@ public static class AbyssGen
             {
                 t.TileFrameY = 54;
                 if (largeCrystals &&
-                    (DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
+                    (Utilities.DistanceToTileCollisionHit(potentialCrystalPosition.ToWorldCoordinates(),
                         Vector2.UnitX, 25) ?? 500f) < 64f)
                     invalidPlacement = true;
             }
@@ -1432,11 +1431,11 @@ public static class AbyssGen
     public static void GenerateLayer3PyreMantle(Rectangle area)
     {
         int top = Layer3Top + Main.remixWorld.ToDirectionInt() * 10;
-        int wallSeed = WorldGen.genRand.Next();
+        int wallSeed = Terraria.WorldGen.genRand.Next();
         ushort gravelID = GetTileId("CalamityMod.Tiles.Abyss.AbyssGravel");
         ushort pyreID = GetTileId("CalamityMod.Tiles.Abyss.PyreMantle");
         ushort pyreWallID = GetWallId("CalamityMod.Walls.PyreMantleWall");
-        FastRandom rng = new(WorldGen.genRand.Next());
+        FastRandom rng = new(Terraria.WorldGen.genRand.Next());
 
         for (int i = area.Left; i < area.Right + 36; i++)
         {
@@ -1550,7 +1549,7 @@ public static class AbyssGen
         int entireAbyssTop = AbyssTop;
         int top = Layer4Top;
         int bottom = AbyssBottom;
-        int offsetSeed = WorldGen.genRand.Next();
+        int offsetSeed = Terraria.WorldGen.genRand.Next();
         ushort voidstoneWallID = GetWallId("CalamityMod.Walls.VoidstoneWallUnsafe");
         var terminusPedestalPosition = new Point((MaxAbyssWidth - WallThickness - 40) / 2, 80);
 
@@ -1629,7 +1628,7 @@ public static class AbyssGen
 
         if (Main.remixWorld)
         {
-            WorldGen.PlaceTile(searchPosition.X, searchPosition.Y, terminusTileID);
+            Terraria.WorldGen.PlaceTile(searchPosition.X, searchPosition.Y, terminusTileID);
         }
         else
         {
@@ -1639,7 +1638,7 @@ public static class AbyssGen
                     Main.remixWorld ? new Searches.Up(9001) : new Searches.Down(9001));
                 groundPosition.Y += Main.remixWorld.ToDirectionInt();
 
-                if (WorldGen.PlaceTile(groundPosition.X, groundPosition.Y, terminusTileID))
+                if (Terraria.WorldGen.PlaceTile(groundPosition.X, groundPosition.Y, terminusTileID))
                     break;
 
                 // Slide to the right for a different search position if the current one didn't find a valid spot.
@@ -1657,7 +1656,7 @@ public static class AbyssGen
         ushort voidstoneID = GetTileId("CalamityMod.Tiles.Abyss.Voidstone");
         ushort voidstoneWallID = GetWallId("CalamityMod.Walls.VoidstoneWall");
         ushort pyreID = GetTileId("CalamityMod.Tiles.Abyss.PyreMantle");
-        FastRandom rng = new(WorldGen.genRand.Next());
+        FastRandom rng = new(Terraria.WorldGen.genRand.Next());
 
         if (Main.remixWorld)
         {
@@ -1803,7 +1802,7 @@ public static class AbyssGen
 
     public static void ResetToWater(Point p)
     {
-        WorldGen.KillTile(p.X, p.Y);
+        Terraria.WorldGen.KillTile(p.X, p.Y);
 
         Main.tile[p].Get<TileWallWireStateData>().HasTile = false;
         Main.tile[p].Get<LiquidData>().LiquidType = LiquidID.Water;
@@ -1813,53 +1812,6 @@ public static class AbyssGen
             Tile.SmoothSlope(p.X, p.Y);
     }
 
-    public static void ChangeLavaToWater()
-    {
-        if (!Main.remixWorld) // 非颠倒世界跳过
-        {
-            return;
-        }
-
-        int minWidth = MinAbyssWidth;
-        int maxWidth = MaxAbyssWidth;
-        int top = AbyssTop;
-        int bottom = AbyssBottom;
-
-        for (int i = 1; i < maxWidth; i++)
-        {
-            int x = GetActualX(i);
-            for (int y = top; y > bottom; y--)
-            {
-                Tile t = Framing.GetTileSafely(x, y);
-                float yCompletion = Utils.GetLerpValue(top, bottom - 1f, y, true);
-                if (i >= GetWidth(yCompletion, minWidth, maxWidth))
-                {
-                    continue;
-                }
-
-                // 将岩浆和黑曜石转换为水
-                if (t.HasTile)
-                {
-                    if (t.TileType == TileID.Obsidian)
-                    {
-                        ResetToWater(new Point(x, y));
-                    }
-                }
-                else
-                {
-                    if (t.LiquidType == LiquidID.Lava)
-                    {
-                        t.LiquidType = LiquidID.Water;
-                    }
-
-                    if (t.LiquidAmount < 255)
-                    {
-                        t.LiquidAmount = 255;
-                    }
-                }
-            }
-        }
-    }
 
     public static void GenerateScenicTilesInArea(Rectangle area, int chance, int variants, ushort[] groundTiles,
         ushort[] tileVariants)
@@ -1873,17 +1825,17 @@ public static class AbyssGen
                 {
                     Tile t = Framing.GetTileSafely(x, y);
                     Tile below = Framing.GetTileSafely(x, y + 1);
-                    if (!WorldGen.SolidTile(below) || t.HasTile)
+                    if (!Terraria.WorldGen.SolidTile(below) || t.HasTile)
                         continue;
 
-                    if (!WorldGen.genRand.NextBool(chance))
+                    if (!Terraria.WorldGen.genRand.NextBool(chance))
                         continue;
 
                     if (!groundTiles.Contains(below.TileType))
                         continue;
 
-                    ushort tileID = WorldGen.genRand.Next(tileVariants);
-                    PlaceObjectWithGoddamnForce(x, y, tileID, WorldGen.genRand.Next(variants));
+                    ushort tileID = Terraria.WorldGen.genRand.Next(tileVariants);
+                    PlaceObjectWithGoddamnForce(x, y, tileID, Terraria.WorldGen.genRand.Next(variants));
                 }
             }
             else
@@ -1892,17 +1844,17 @@ public static class AbyssGen
                 {
                     Tile t = Framing.GetTileSafely(x, y);
                     Tile below = Framing.GetTileSafely(x, y + 1);
-                    if (!WorldGen.SolidTile(below) || t.HasTile)
+                    if (!Terraria.WorldGen.SolidTile(below) || t.HasTile)
                         continue;
 
-                    if (!WorldGen.genRand.NextBool(chance))
+                    if (!Terraria.WorldGen.genRand.NextBool(chance))
                         continue;
 
                     if (!groundTiles.Contains(below.TileType))
                         continue;
 
-                    ushort tileID = WorldGen.genRand.Next(tileVariants);
-                    PlaceObjectWithGoddamnForce(x, y, tileID, WorldGen.genRand.Next(variants));
+                    ushort tileID = Terraria.WorldGen.genRand.Next(tileVariants);
+                    PlaceObjectWithGoddamnForce(x, y, tileID, Terraria.WorldGen.genRand.Next(variants));
                 }
             }
         }
@@ -1924,7 +1876,7 @@ public static class AbyssGen
 
         for (int i = 0; i < width; i++)
         {
-            if (!WorldGen.SolidTile(x + i, y + 1))
+            if (!Terraria.WorldGen.SolidTile(x + i, y + 1))
                 return;
         }
 
@@ -1932,7 +1884,7 @@ public static class AbyssGen
         for (int i = x; i < x + width; i++)
         {
             for (int j = 0; j < height; j++)
-                WorldGen.KillTile(i, y - j);
+                Terraria.WorldGen.KillTile(i, y - j);
         }
 
         for (int i = x; i < x + width; i++)
@@ -1996,7 +1948,7 @@ public static class AbyssGen
     public static bool InsideOfLayer3HydrothermalZone(Point p)
     {
         int x = p.X;
-        if (WorldGen.generatingWorld && x >= Main.maxTilesX / 2)
+        if (Terraria.WorldGen.generatingWorld && x >= Main.maxTilesX / 2)
             x = Main.maxTilesX - x;
 
         if (x >= MaxAbyssWidth - WallThickness + 1)
@@ -2027,4 +1979,67 @@ public static class AbyssGen
     }
 
     #endregion Utilities
+
+    #region 新增方法
+
+    public static void ChangeLavaToWater()
+    {
+        if (!Main.remixWorld) // 非颠倒世界跳过
+        {
+            return;
+        }
+
+        int minWidth = MinAbyssWidth;
+        int maxWidth = MaxAbyssWidth;
+        int top = AbyssTop;
+        int bottom = AbyssBottom;
+
+        for (int i = 1; i < maxWidth; i++)
+        {
+            int x = GetActualX(i);
+            for (int y = top; y > bottom; y--)
+            {
+                Tile t = Framing.GetTileSafely(x, y);
+                float yCompletion = Utils.GetLerpValue(top, bottom - 1f, y, true);
+                if (i >= GetWidth(yCompletion, minWidth, maxWidth))
+                {
+                    continue;
+                }
+
+                // 将岩浆和黑曜石转换为水
+                if (t.HasTile)
+                {
+                    if (t.TileType == TileID.Obsidian)
+                    {
+                        ResetToWater(new Point(x, y));
+                    }
+                }
+                else
+                {
+                    if (t.LiquidType == LiquidID.Lava)
+                    {
+                        t.LiquidType = LiquidID.Water;
+                    }
+
+                    if (t.LiquidAmount < 255)
+                    {
+                        t.LiquidAmount = 255;
+                    }
+                }
+            }
+        }
+    }
+
+    public static bool IsInsideOfAbyss(Point p)
+    {
+        var verticalCheck = Main.remixWorld
+            ? AbyssBottom <= p.Y && p.Y < AbyssTop + 34
+            : AbyssTop - 34 < p.Y && p.Y <= AbyssBottom;
+        var yCompletion = Utils.GetLerpValue(AbyssTop, AbyssBottom - 1f, p.Y / 16f, true);
+        var abyssWidth = GetWidth(yCompletion, MinAbyssWidth, MaxAbyssWidth);
+        var horizontalCheck = AtLeftSideOfWorld ? p.X < abyssWidth : p.X > Main.maxTilesX - abyssWidth;
+        return verticalCheck && horizontalCheck;
+    }
+
+    #endregion 新增方法
 }
