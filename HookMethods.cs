@@ -7,6 +7,8 @@ public class HookMethods : ICustomDetourProvider
         // On 钩子
         HookHelper.ModifyMethodWithDetour(typeof(Terraria.WorldGen).GetMethod("oceanDepths"), OceanDepths);
         HookHelper.ModifyMethodWithDetour(GetMethod("InfernumMode.Content.WorldGeneration.CustomAbyss", "Generate"), Generate);
+        HookHelper.ModifyMethodWithDetour(GetMethod("InfernumMode.Content.WorldGeneration.CustomAbyss", "InsideOfLayer1Forest"), InsideOfLayer1Forest);
+        HookHelper.ModifyMethodWithDetour(GetMethod("InfernumMode.Content.WorldGeneration.CustomAbyss", "InsideOfLayer3HydrothermalZone"), InsideOfLayer3HydrothermalZone);
         HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "AbyssTop")!.GetGetMethod(), AbyssTop);
         HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer2Top")!.GetGetMethod(), Layer2Top);
         HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer3Top")!.GetGetMethod(), Layer3Top);
@@ -33,6 +35,16 @@ public class HookMethods : ICustomDetourProvider
     private void Generate(Action ori)
     {
         AbyssGen.Generate();
+    }
+
+    private bool InsideOfLayer1Forest(Func<Point, bool> ori, Point p)
+    {
+        return AbyssGen.InsideOfLayer1Forest(p);
+    }
+
+    private bool InsideOfLayer3HydrothermalZone(Func<Point, bool> ori, Point p)
+    {
+        return AbyssGen.InsideOfLayer3HydrothermalZone(p);
     }
 
     private int AbyssTop(Func<int> ori)

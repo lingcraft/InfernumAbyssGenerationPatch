@@ -33,6 +33,8 @@ public class InfernumAbyssGenerationPatch : Mod
         {
             return;
         }
+
+        SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.DifficultyManagementSystem", "DisableDifficultyModes", false);
     }
 
     public override void Unload()

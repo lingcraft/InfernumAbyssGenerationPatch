@@ -1716,8 +1716,7 @@ public static class AbyssGen
 
     public static int GetWidth(float yCompletion, int minWidth, int maxWidth)
     {
-        return (int)Lerp(minWidth, maxWidth,
-            Pow(yCompletion * Utils.GetLerpValue(1f, 0.81f, yCompletion, true), 0.13f));
+        return (int)Lerp(minWidth, maxWidth, Pow(yCompletion * Utils.GetLerpValue(1f, 0.81f, yCompletion, true), 0.13f));
     }
 
     public static void ClearOutStrayTiles(Rectangle area)
