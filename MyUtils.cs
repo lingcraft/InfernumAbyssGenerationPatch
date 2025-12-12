@@ -25,7 +25,6 @@ public class MyUtils
 {
     internal static Mod? InfernumMod;
     internal static Mod? CalamityMod;
-    internal static Mod? LuminanceMod;
     internal static readonly Dictionary<string, Type> ClassCache = new();
     internal static readonly Dictionary<string, MethodInfo> MethodCache = new();
     internal static readonly Dictionary<string, FieldInfo> FieldCache = new();
@@ -63,7 +62,7 @@ public class MyUtils
         }
 
         var newClassInfo = (classPath.StartsWith("Infernum") ? InfernumMod :
-            classPath.StartsWith("Calamity") ? CalamityMod : LuminanceMod)?.Code?.GetType(classPath);
+            classPath.StartsWith("Calamity") ? CalamityMod : null)?.Code?.GetType(classPath);
         if (newClassInfo is null)
         {
             return null;

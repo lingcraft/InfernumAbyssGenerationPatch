@@ -29,11 +29,6 @@ public class InfernumAbyssGenerationPatch : Mod
             return;
         }
 
-        if (!ModLoader.TryGetMod("Luminance", out LuminanceMod))
-        {
-            return;
-        }
-
         SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.DifficultyManagementSystem", "DisableDifficultyModes", false);
     }
 
@@ -41,7 +36,6 @@ public class InfernumAbyssGenerationPatch : Mod
     {
         InfernumMod = null;
         CalamityMod = null;
-        LuminanceMod = null;
         ClearCache();
     }
 }
