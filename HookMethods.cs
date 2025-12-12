@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace InfernumAbyssGenerationPatch;
+﻿namespace InfernumAbyssGenerationPatch;
 
 public class HookMethods : ICustomDetourProvider
 {
