@@ -1604,19 +1604,18 @@ public static class AbyssGen
 
     public static void GenerateEidolistPedestal(Point pedestalCenter)
     {
-        SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSyste",
-            "EidolistWorshipPedestalCenter",
-            new Point(pedestalCenter.X, pedestalCenter.Y + Main.remixWorld.ToDirectionInt() * 2));
+        SetValue<PropertyInfo>("InfernumMode.Core.GlobalInstances.Systems.WorldSaveSystem",
+            "EidolistWorshipPedestalCenter", new Point(pedestalCenter.X, pedestalCenter.Y - 2));
 
         ushort voidstoneID = GetTileId("CalamityMod.Tiles.Abyss.Voidstone");
-        WorldUtils.Gen(pedestalCenter,
-            InvokeConstructor<GenShape>("InfernumMode.Common.Worldgen.CustomInfernumShapes", "HalfCircle",
-                EidolistPedestalRadius),
-            Actions.Chain(
-            [
+        WorldUtils.Gen(
+            pedestalCenter,
+            InvokeConstructor<GenShape>("InfernumMode.Common.Worldgen.CustomInfernumShapes", "HalfCircle", EidolistPedestalRadius),
+            Actions.Chain([
                 new Modifiers.Blotches(2, 0.36),
                 new Actions.SetTile(voidstoneID)
-            ]));
+            ])
+        );
     }
 
     public static void GenerateTerminusTile(Point searchPosition)
