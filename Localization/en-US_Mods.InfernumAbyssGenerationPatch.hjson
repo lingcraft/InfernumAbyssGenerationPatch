@@ -1,2 +1,6 @@
 ModName: Infernum Abyss Generation Patch
-Message: Adjusting abyss liquid
+
+WorldGen: {
+	CorrectAbyssLiquid: Correcting abyss liquid
+	SupplyBrimstoneSlag: Supplying brimstone slag
+}

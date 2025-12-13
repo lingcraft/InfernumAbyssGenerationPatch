@@ -1066,9 +1066,9 @@ public static class AbyssGen
                 Vector2 caveMoveOffset = caveMoveDirection * carveOutArea * 0.333f;
 
                 // 防止x过大
-                float yCompletion = Utils.GetLerpValue(entireAbyssTop, entireAbyssBottom, caveEndPoints[i].Y, true);
-                if (caveEndPoints[i].X >= GetWidth(yCompletion, minWidth, maxWidth) - WallThickness)
-                    caveMoveOffset.X = 0;
+                //float yCompletion = Utils.GetLerpValue(entireAbyssTop, entireAbyssBottom, caveEndPoints[i].Y, true);
+                //if (caveEndPoints[i].X >= GetWidth(yCompletion, minWidth, maxWidth) - WallThickness)
+                //    caveMoveOffset.X = 0;
 
                 caveEndPoints[i] += caveMoveOffset.ToPoint();
                 caveEndPoints[i] = new(Utils.Clamp(caveEndPoints[i].X, 45, Main.maxTilesX - 45),
@@ -2004,25 +2004,36 @@ public static class AbyssGen
                 }
 
                 // 将岩浆和黑曜石转换为水
-                if (t.HasTile)
+                if (t.LiquidType == LiquidID.Lava || t.TileType == TileID.Obsidian)
                 {
-                    if (t.TileType == TileID.Obsidian)
-                    {
-                        ResetToWater(new Point(x, y));
-                    }
+                    ResetToWater(new Point(x, y));
                 }
-                else
-                {
-                    if (t.LiquidType == LiquidID.Lava)
-                    {
-                        t.LiquidType = LiquidID.Water;
-                    }
 
-                    if (t.LiquidAmount < 255)
-                    {
-                        t.LiquidAmount = 255;
-                    }
+                if (t.LiquidAmount < 255)
+                {
+                    t.LiquidAmount = 255;
                 }
+            }
+        }
+    }
+
+    public static void SupplyBrimstoneSlag()
+    {
+        if (!Main.remixWorld) // 非颠倒世界跳过
+        {
+            return;
+        }
+
+        var brimstoneSlagId = GetTileId("CalamityMod.Tiles.Crags.BrimstoneSlag");
+        for (int x = 0; x <= MaxAbyssWidth; x++)
+        {
+            if (HasVerticalPassage(x, Main.UnderworldLayer, x + 2, Main.maxTilesY - 192))
+            {
+                WorldUtils.Gen(
+                    new Point(x, Main.UnderworldLayer),
+                    new Shapes.Rectangle(3, 8),
+                    new Actions.PlaceTile(brimstoneSlagId)
+                );
             }
         }
     }
@@ -2036,6 +2047,60 @@ public static class AbyssGen
         var abyssWidth = GetWidth(yCompletion, MinAbyssWidth, MaxAbyssWidth);
         var horizontalCheck = AtLeftSideOfWorld ? p.X < abyssWidth : p.X > Main.maxTilesX - abyssWidth;
         return verticalCheck && horizontalCheck;
+    }
+
+    public static bool HasVerticalPassage(int startX, int startY, int endX, int endY)
+    {
+        var minX = Math.Min(startX, endX);
+        var maxX = Math.Max(startX, endX);
+        var minY = Math.Min(startY, endY);
+        var maxY = Math.Max(startY, endY);
+        var visited = new HashSet<Point>();
+        var queue = new Queue<Point>();
+
+        for (int x = minX; x <= maxX; x++)
+        {
+            if (!Main.tile[x, minY].HasTile)
+            {
+                var startPoint = new Point(x, minY);
+                queue.Enqueue(startPoint);
+                visited.Add(startPoint);
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            Point current = queue.Dequeue();
+
+            if (current.Y >= maxY)
+            {
+                return true;
+            }
+
+            Point[] directions =
+            [
+                new (0, 1),
+                new (0, -1),
+                new (1, 0),
+                new (-1, 0)
+            ];
+
+            foreach (Point dir in directions)
+            {
+                var next = new Point(current.X + dir.X, current.Y + dir.Y);
+
+                if (next.X >= minX && next.X <= maxX &&
+                    next.Y >= minY && next.Y <= maxY &&
+                    !visited.Contains(next) &&
+                    !Main.tile[next.X, next.Y].HasTile)
+                {
+                    queue.Enqueue(next);
+                    visited.Add(next);
+                }
+            }
+        }
+
+        return false;
     }
 
     #endregion 新增方法
