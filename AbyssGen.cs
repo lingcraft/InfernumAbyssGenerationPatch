@@ -2032,7 +2032,7 @@ public static class AbyssGen
         var verticalCheck = Main.remixWorld
             ? AbyssBottom <= p.Y && p.Y < AbyssTop + 34
             : AbyssTop - 34 < p.Y && p.Y <= AbyssBottom;
-        var yCompletion = Utils.GetLerpValue(AbyssTop, AbyssBottom - 1f, p.Y / 16f, true);
+        var yCompletion = Utils.GetLerpValue(AbyssTop, AbyssBottom - 1f, p.Y, true);
         var abyssWidth = GetWidth(yCompletion, MinAbyssWidth, MaxAbyssWidth);
         var horizontalCheck = AtLeftSideOfWorld ? p.X < abyssWidth : p.X > Main.maxTilesX - abyssWidth;
         return verticalCheck && horizontalCheck;
