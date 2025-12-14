@@ -3,4 +3,5 @@ author = lingcraft
 version = 1.0.0
 homepage = https://github.com/lingcraft/InfernumAbyssGenerationPatch
 modReferences = InfernumMode
+noCompile = true
 buildIgnore = *.user
