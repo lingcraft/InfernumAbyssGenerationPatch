@@ -165,15 +165,6 @@ public static class AbyssGen
 
     public static bool InAnySubworld() => InvokeMethod<bool>("CalamityMod.WeakReferenceSupport", "InAnySubworld");
 
-    public static bool MeetsBaseAbyssRequirement(Player player, out int playerYTileCoords)
-    {
-        var method = GetMethod("CalamityMod.BiomeManagers.AbyssLayer1Biome", "MeetsBaseAbyssRequirement");
-        var args = new object[] { player, null };
-        bool result = (bool)method?.Invoke(null, args)!;
-        playerYTileCoords = (int)args[1];
-        return result;
-    }
-
     #endregion 反射方法
 
     #region Placement Methods
@@ -2037,17 +2028,6 @@ public static class AbyssGen
         }
     }
 
-    public static bool IsInsideOfAbyss(Point p)
-    {
-        var verticalCheck = Main.remixWorld
-            ? AbyssBottom <= p.Y && p.Y < AbyssTop + 34
-            : AbyssTop - 34 < p.Y && p.Y <= AbyssBottom;
-        var yCompletion = Utils.GetLerpValue(AbyssTop, AbyssBottom - 1f, p.Y, true);
-        var abyssWidth = GetWidth(yCompletion, MinAbyssWidth, MaxAbyssWidth);
-        var horizontalCheck = AtLeftSideOfWorld ? p.X < abyssWidth : p.X > Main.maxTilesX - abyssWidth;
-        return verticalCheck && horizontalCheck;
-    }
-
     public static bool HasVerticalPassage(int startX, int startY, int endX, int endY)
     {
         var minX = Math.Min(startX, endX);
@@ -2100,6 +2080,26 @@ public static class AbyssGen
         }
 
         return false;
+    }
+
+    public static bool IsInsideOfAbyss(Point p)
+    {
+        var verticalCheck = Main.remixWorld
+            ? AbyssBottom <= p.Y && p.Y < AbyssTop + 34
+            : AbyssTop - 34 < p.Y && p.Y <= AbyssBottom;
+        var yCompletion = Utils.GetLerpValue(AbyssTop, AbyssBottom - 1f, p.Y, true);
+        var abyssWidth = GetWidth(yCompletion, MinAbyssWidth, MaxAbyssWidth);
+        var horizontalCheck = AtLeftSideOfWorld ? p.X < abyssWidth : p.X > Main.maxTilesX - abyssWidth;
+        return verticalCheck && horizontalCheck;
+    }
+
+    public static bool MeetsBaseAbyssRequirement(Player player, out int playerYTileCoords)
+    {
+        Point point = player.Center.ToTileCoordinates();
+        playerYTileCoords = point.Y;
+        if (InAnySubworld())
+            return false;
+        return !player.lavaWet && !player.honeyWet && IsInsideOfAbyss(point);
     }
 
     #endregion 新增方法

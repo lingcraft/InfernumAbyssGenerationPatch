@@ -72,14 +72,7 @@ public class HookMethods : ICustomDetourProvider
         var cursor = new ILCursor(il);
         cursor.EmitLdarg2();
         cursor.EmitLdarg3();
-        cursor.EmitDelegate((Player player, out int playerYTileCoords) =>
-        {
-            Point point = player.Center.ToTileCoordinates();
-            playerYTileCoords = point.Y;
-            if (AbyssGen.InAnySubworld())
-                return false;
-            return !player.lavaWet && !player.honeyWet && AbyssGen.IsInsideOfAbyss(point);
-        });
+        cursor.EmitDelegate(AbyssGen.MeetsBaseAbyssRequirement);
         cursor.EmitRet();
     }
 
