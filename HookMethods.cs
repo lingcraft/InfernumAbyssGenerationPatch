@@ -70,10 +70,9 @@ public class HookMethods : ICustomDetourProvider
     private void ChangeAbyssRequirement(ILContext il)
     {
         var cursor = new ILCursor(il);
-        cursor.EmitLdarg1();
         cursor.EmitLdarg2();
         cursor.EmitLdarg3();
-        cursor.EmitDelegate((Func<Player, int, bool> ori, Player player, out int playerYTileCoords) =>
+        cursor.EmitDelegate((Player player, out int playerYTileCoords) =>
         {
             Point point = player.Center.ToTileCoordinates();
             playerYTileCoords = point.Y;
