@@ -9,10 +9,10 @@ public class HookMethods : ICustomDetourProvider
         HookHelper.ModifyMethodWithDetour(GetMethod("InfernumMode.Content.WorldGeneration.CustomAbyss", "Generate"), Generate);
         HookHelper.ModifyMethodWithDetour(GetMethod("InfernumMode.Content.WorldGeneration.CustomAbyss", "InsideOfLayer1Forest"), InsideOfLayer1Forest);
         HookHelper.ModifyMethodWithDetour(GetMethod("InfernumMode.Content.WorldGeneration.CustomAbyss", "InsideOfLayer3HydrothermalZone"), InsideOfLayer3HydrothermalZone);
-        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "AbyssTop")!.GetGetMethod(), AbyssTop);
-        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer2Top")!.GetGetMethod(), Layer2Top);
-        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer3Top")!.GetGetMethod(), Layer3Top);
-        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer4Top")!.GetGetMethod(), Layer4Top);
+        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "AbyssTop")!.GetMethod, AbyssTop);
+        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer2Top")!.GetMethod, Layer2Top);
+        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer3Top")!.GetMethod, Layer3Top);
+        HookHelper.ModifyMethodWithDetour(GetProperty("InfernumMode.Content.WorldGeneration.CustomAbyss", "Layer4Top")!.GetMethod, Layer4Top);
 
         // IL 钩子
         HookHelper.ModifyMethodWithIL(GetMethod("InfernumMode.Core.ILEditingStuff.AdjustAbyssDefinitionHook", "ChangeAbyssRequirement"), ChangeAbyssRequirement);
