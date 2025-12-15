@@ -197,7 +197,7 @@ public static class AbyssGen
         int top = AbyssTop;
         int bottom = AbyssBottom;
         ushort gravelID = GetTileId("CalamityMod.Tiles.Abyss.AbyssGravel");
-        ushort gravelWallID = GetWallId("CalamityMod.Walls.CalamityMod.Walls.AbyssGravelWall");
+        ushort gravelWallID = GetWallId("CalamityMod.Walls.AbyssGravelWall");
 
         for (int i = 1; i < maxWidth; i++)
         {

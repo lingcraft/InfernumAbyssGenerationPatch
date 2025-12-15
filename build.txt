@@ -1,6 +1,6 @@
 displayName = Infernum Abyss Generation Patch
 author = lingcraft
-version = 1.0.0
+version = 1.0.1
 homepage = https://github.com/lingcraft/InfernumAbyssGenerationPatch
 modReferences = InfernumMode
 noCompile = true
