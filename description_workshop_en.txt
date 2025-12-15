@@ -1,1 +1,8 @@
-This description will show up on the steam page, check out https://steamcommunity.com/comment/Guide/formattinghelp.
+﻿[img]https://i.imgur.com/ki1CPZe.gif[/img]
+[h2]Infernum Abyss Generation Patch[/h2]
+[b]Features：[/b]
+[olist]
+    [*]Added logic to the Abyss terrain generation for Infernum Mode with "Don't dig up" and "Get fixed boi" seeds.
+    [*]Fixed an issue where, when generating an Inverted World, connected Brimstone Slag below the Sulphurous Sea would cause all the lava above the Brimstone Crags to leak down.
+    [*]Fixed the issue where, in an Inverted Abyss, being judged as both Beach and Abyss Biome caused the water color to turn to the default blue, now the Abyss water color can be displayed correctly.
+[/olist]

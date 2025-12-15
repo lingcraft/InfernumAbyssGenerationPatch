@@ -1,1 +1,8 @@
-This description will show up on the steam page, check out https://steamcommunity.com/comment/Guide/formattinghelp.
+﻿[img]https://i.imgur.com/ki1CPZe.gif[/img]
+[h2]灾厄炼狱模式深渊生成补丁[/h2]
+[b]功能：[/b]
+[olist]
+    [*]补充炼狱模式含有颠倒世界特性种子的深渊地形生成逻辑。
+    [*]修复生成颠倒特性世界时，硫磺海下方的硫磺火石砖有连通的地方会导致硫火之崖上方的岩浆全部漏下去的问题。
+    [*]修复在颠倒特性的深渊中，同时判定为海滩和深渊导致液体颜色变为默认的蓝色的问题，现在可以正常显示深渊液体的颜色。
+[/olist]

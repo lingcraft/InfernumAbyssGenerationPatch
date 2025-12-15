@@ -1,1 +1,11 @@
-Modify this file with a description of your mod.
+灾厄炼狱模式深渊生成补丁
+功能：
+    1. 补充炼狱模式含有颠倒世界特性种子的深渊地形生成逻辑。
+    2. 修复生成颠倒特性世界时，硫磺海下方的硫磺火石砖有连通的地方会导致硫火之崖上方的岩浆全部漏下去的问题。
+    3. 修复在颠倒特性的深渊中，同时判定为海滩和深渊导致液体颜色变为默认的蓝色的问题，现在可以正常显示深渊液体的颜色。
+------------------------------------------------------------------------------------------
+Infernum Abyss Generation Patch
+Features：
+    1. Added logic to the Abyss terrain generation for Infernum Mode with "Don't dig up" and "Get fixed boi" seeds.
+    2. Fixed an issue where, when generating an Inverted World, connected Brimstone Slag below the Sulphurous Sea would cause all the lava above the Brimstone Crags to leak down.
+    3. Fixed the issue where, in an Inverted Abyss, being judged as both Beach and Abyss Biome caused the water color to turn to the default blue, now the Abyss water color can be displayed correctly.
