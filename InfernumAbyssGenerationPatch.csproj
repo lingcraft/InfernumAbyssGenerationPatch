@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<!-- Import tModLoader mod properties -->
 	<Import Project="..\tModLoader.targets" />
-
 	<!-- General -->
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -20,13 +18,14 @@
 		<None Include=".gitignore;.gitattributes;./LICENSE">
 			<Visible>false</Visible>
 		</None>
+		<None Include="./*.dll;./*.pdb;./*.deps.json">
+			<Visible>false</Visible>
+		</None>
 	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="Luminance">
 			<HintPath>lib\Luminance.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-
 	<!-- References -->
-
 </Project>
