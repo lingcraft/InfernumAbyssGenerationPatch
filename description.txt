@@ -10,4 +10,4 @@ Features：
     1. Added logic to the Abyss terrain generation for Infernum Mode with "Don't dig up" and "Get fixed boi" seeds.
     2. Fixed an issue where, when generating an Inverted World, connected Brimstone Slag below the Sulphurous Sea would cause all the lava above the Brimstone Crags to leak down.
     3. Fixed the issue where, in an Inverted Abyss, being judged as both Beach and Abyss Biome caused the water color to turn to the default blue, now the Abyss water color can be displayed correctly.
-    4. Unlocked the Expert and above difficulty levels of Infernum Mode natively, so you don't need to install the Infernum Master and Legendary Modes Patch mod.
+    4. Unlocked the Expert and above difficulty levels of Infernum Mode natively, so you can play without Infernum Master and Legendary Modes Patch mod.
