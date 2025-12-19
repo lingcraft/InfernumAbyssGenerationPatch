@@ -1,8 +1,3 @@
-using Luminance.Core.Hooking;
-using System;
-using Terraria;
-using Terraria.ModLoader;
-
 namespace InfernumAbyssGenerationPatch;
 
 public class InfernumAbyssGenerationPatch : Mod

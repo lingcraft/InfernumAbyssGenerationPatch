@@ -22,10 +22,10 @@
 			<Visible>false</Visible>
 		</None>
 	</ItemGroup>
+	<!-- References -->
 	<ItemGroup>
 		<Reference Include="Luminance">
 			<HintPath>Luminance.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-	<!-- References -->
 </Project>
